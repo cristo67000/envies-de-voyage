@@ -1,0 +1,9 @@
+# Fichiers système
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Archives de carnet exportées depuis l'application : elles contiennent des
+# notes et des photographies personnelles, elles n'ont rien à faire ici.
+envies-de-voyage-*.zip
+envies-de-voyage-*.gpx

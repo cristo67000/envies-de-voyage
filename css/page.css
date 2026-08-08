@@ -1,0 +1,35 @@
+/* Pages de texte hors application (confidentialité). */
+:root { --papier: #f4f1ec; --encre: #21272d; --doux: #5b646e; --accent: #1f3a4d; --trait: #ded6c9; }
+
+body {
+  margin: 0 auto;
+  max-width: 46rem;
+  padding: 28px 20px 64px;
+  background: var(--papier);
+  color: var(--encre);
+  font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+h1 { font-size: 25px; line-height: 1.25; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 30px 0 8px; color: var(--accent); }
+p.chapeau { color: var(--doux); margin-top: 0; }
+ul { padding-left: 22px; }
+li { margin: 5px 0; }
+a { color: #2f5f7e; }
+strong { font-weight: 650; }
+
+.encadre {
+  margin: 22px 0;
+  padding: 14px 16px;
+  border-left: 4px solid var(--accent);
+  background: #fffdfa;
+  border-radius: 0 10px 10px 0;
+}
+
+footer {
+  margin-top: 40px;
+  padding-top: 14px;
+  border-top: 1px solid var(--trait);
+  font-size: 14px;
+  color: var(--doux);
+}

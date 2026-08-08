@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'none'; style-src 'self'; img-src 'self' data:; base-uri 'self'; form-action 'none'; object-src 'none'; frame-ancestors 'none'">
+  <title>Confidentialité — Mes envies de voyage</title>
+  <link rel="stylesheet" href="css/page.css">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+</head>
+<body>
+
+  <h1>Politique de confidentialité</h1>
+  <p class="chapeau">Application « Mes envies de voyage » — dernière mise à jour : 8 août 2026.</p>
+
+  <div class="encadre">
+    <p><strong>En une phrase :</strong> vos envies, vos notes, vos photographies et vos circuits
+      restent dans votre navigateur, sur votre appareil. Aucun compte, aucun serveur, aucune
+      statistique, aucune publicité. Personne — pas même l'auteur de l'application — ne peut y accéder.</p>
+  </div>
+
+  <h2>Ce qui est enregistré, et où</h2>
+  <p>Tout ce que vous saisissez est écrit dans la base <em>IndexedDB</em> du navigateur, un espace
+    privé propre à ce site et à cet appareil :</p>
+  <ul>
+    <li>les points d'intérêt : nom, symbole, coordonnées, adresse libre, notes, liens ;</li>
+    <li>l'état visité, la date, l'appréciation en étoiles et le commentaire ;</li>
+    <li>les photographies, sous forme d'images réduites ;</li>
+    <li>les circuits et l'ordre de leurs étapes ;</li>
+    <li>vos réglages d'affichage, dont la date de votre dernière archive ;</li>
+    <li>la trace des suppressions : pour chaque fiche effacée, son identifiant interne et la
+      date de l'effacement — ni son nom, ni sa position, ni ses notes. Ces quelques octets
+      servent uniquement à ce qu'une fiche supprimée sur un appareil ne réapparaisse pas
+      lorsque vous réunissez deux carnets.</li>
+  </ul>
+  <p>Ces données ne sont envoyées nulle part. Elles ne sont pas synchronisées, pas sauvegardées à
+    distance, pas partagées. Le revers de cette promesse doit être dit clairement : <strong>si vous
+    videz les données de site du navigateur, désinstallez l'application ou changez d'appareil, tout
+    disparaît</strong>. C'est la raison d'être de l'export d'archive, dans les réglages.</p>
+
+  <h2>Les photographies</h2>
+  <p>Les images que vous ajoutez sont lues, redimensionnées et réencodées <em>dans la page</em>,
+    par votre navigateur. Aucun fichier n'est téléversé.</p>
+  <p>Le réencodage a un effet secondaire utile : la copie conservée dans le carnet <strong>ne
+    contient plus aucune métadonnée</strong> — ni coordonnées GPS de la prise de vue, ni numéro de
+    série d'appareil, ni nom d'auteur, ni horodatage. Ces informations sont lues une fois, avant la
+    réduction, uniquement pour vous proposer de placer le point sur la carte et de dater la visite.
+    Elles ne sont pas conservées. Vos fichiers d'origine, eux, ne sont ni modifiés ni déplacés.</p>
+
+  <h2>La géolocalisation</h2>
+  <p>Elle est <strong>facultative</strong> et n'est jamais demandée à l'ouverture. L'autorisation
+    n'est sollicitée qu'au moment où vous appuyez sur le bouton <strong>⊕</strong> de la carte, ou
+    lorsque vous demandez à créer une envie « ici, où je suis ».</p>
+  <p>La position obtenue sert uniquement, sur l'appareil, à afficher un repère, à calculer des
+    distances et à composer un lien d'itinéraire. Elle n'est ni enregistrée dans le carnet, ni
+    transmise à qui que ce soit.</p>
+
+  <h2>Ce qui sort de l'appareil</h2>
+  <p>Trois choses, et rien d'autre :</p>
+  <ul>
+    <li><strong>Les tuiles du fond de carte</strong>, demandées à <em>tiles.openfreemap.org</em> au
+      fur et à mesure de vos déplacements sur la carte. Ces requêtes indiquent la zone géographique
+      regardée, comme pour n'importe quelle carte en ligne. Elles ne contiennent aucune de vos
+      données.</li>
+    <li><strong>Le texte de la recherche de lieu</strong>, envoyé à
+      <em>nominatim.openstreetmap.org</em> — et seulement lorsque vous choisissez explicitement
+      « Chercher … sur la carte ». Taper dans le champ de recherche n'envoie rien : tant que vous ne
+      demandez pas cette action, la recherche ne porte que sur votre propre carnet. La politique
+      d'usage de Nominatim impose que le service puisse identifier l'application qui l'interroge :
+      le navigateur transmet donc l'adresse du site (son origine seule, jamais la page ni son
+      contenu).</li>
+    <li><strong>Les liens d'itinéraire</strong> que vous ouvrez volontairement : les coordonnées des
+      étapes concernées figurent alors dans l'adresse transmise au service choisi (Google Maps ou
+      OpenStreetMap), qui applique sa propre politique de confidentialité.</li>
+  </ul>
+  <p>Ni vos notes, ni vos photographies, ni vos circuits, ni votre position ne sont transmis.</p>
+
+  <h2>Cookies et traceurs</h2>
+  <p>Aucun. L'application ne dépose pas de cookie, n'utilise aucun outil de mesure d'audience et ne
+    charge aucun script extérieur. Les bibliothèques cartographiques (Leaflet, MapLibre GL) sont
+    embarquées dans l'application, pas appelées à distance.</p>
+
+  <h2>Vos droits</h2>
+  <p>N'ayant aucune donnée en notre possession, il n'y a rien à vous communiquer, rectifier ou
+    supprimer à votre demande. Vous exercez ces droits directement :</p>
+  <ul>
+    <li><strong>accès et portabilité</strong> : Réglages → « Exporter mon carnet », qui produit une
+      archive contenant un fichier JSON lisible et vos photographies en JPEG ;</li>
+    <li><strong>rectification</strong> : modification de chaque fiche à tout moment ;</li>
+    <li><strong>effacement</strong> : Réglages → « Tout effacer », ou suppression des données de
+      site depuis les réglages du navigateur.</li>
+  </ul>
+
+  <h2>Enfants</h2>
+  <p>L'application ne collecte aucune donnée et ne comporte aucun contenu inapproprié. Elle ne
+    présente pas de risque particulier pour un jeune utilisateur.</p>
+
+  <h2>Modifications</h2>
+  <p>Toute évolution de cette politique sera publiée sur cette page, avec sa date. Si une future
+    version devait transmettre la moindre donnée à un tiers, cela serait annoncé explicitement dans
+    l'application avant que vous ne l'utilisiez.</p>
+
+  <footer>
+    <p><a href="index.html">← Retour à l'application</a></p>
+    <p>Fond de carte : © OpenFreeMap, © OpenMapTiles, données © contributeurs OpenStreetMap (ODbL).
+      Recherche de lieux : © contributeurs OpenStreetMap (ODbL).</p>
+  </footer>
+
+</body>
+</html>

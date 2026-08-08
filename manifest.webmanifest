@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Mes envies de voyage",
+  "short_name": "Envies",
+  "description": "Carnet de repérage cartographique : posez vos envies de visite sur une carte vierge de France ou d'Europe avec notes, liens et photographies, composez des circuits, et notez ce que vous avez vu. Tout reste sur l'appareil.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f1ec",
+  "theme_color": "#1f3a4d",
+  "categories": ["travel", "lifestyle", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

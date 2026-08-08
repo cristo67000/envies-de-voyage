@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'; frame-ancestors 'none'">
+  <!-- Origine seule, jamais le chemin : Nominatim exige de pouvoir identifier
+       l'application qui l'interroge, sa politique d'usage l'impose. -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="description" content="Carnet de voyage personnel : notez vos envies de visites sur une carte vierge de France ou d'Europe, avec photos, liens et notes, composez des circuits et gardez le souvenir de ce que vous avez vu.">
+  <meta name="theme-color" content="#1f3a4d">
+  <title>Mes envies de voyage — carnet cartographique</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <header id="barre">
+    <h1><img src="icons/icon-192.png" alt="" width="26" height="26"><span>Mes envies de voyage</span></h1>
+    <div id="bloc-recherche">
+      <input id="q" type="search" placeholder="Chercher dans mon carnet, ou un lieu…"
+             autocomplete="off" aria-label="Chercher dans mon carnet ou une adresse" aria-expanded="false"
+             aria-controls="suggestions" role="combobox">
+      <button id="q-vider" type="button" aria-label="Effacer la recherche" hidden>✕</button>
+      <ul id="suggestions" role="listbox" aria-label="Résultats" hidden></ul>
+    </div>
+    <button id="b-apropos" type="button" aria-label="À propos et confidentialité">ⓘ</button>
+  </header>
+
+  <main id="scene">
+    <div id="carte" role="application" aria-label="Carte de mes envies de voyage"></div>
+
+    <div id="bandeau-pointage" hidden>
+      <span id="bandeau-texte">Touchez la carte à l'endroit de votre envie.</span>
+      <button id="bandeau-annuler" type="button">Annuler</button>
+    </div>
+
+    <!-- Tiroir : panneau latéral sur ordinateur, feuille basse sur téléphone -->
+    <aside id="tiroir" hidden aria-label="Panneau">
+      <button id="tiroir-poignee" type="button" aria-label="Replier le panneau"></button>
+
+      <!-- ————— Mes envies ————— -->
+      <section id="vue-liste" class="vue" hidden>
+        <header class="vue-tete">
+          <h2>Mes envies</h2>
+          <button class="fermer" type="button" data-fermer-tiroir aria-label="Fermer">✕</button>
+        </header>
+        <div class="filtres">
+          <div class="segments" role="group" aria-label="Filtrer par état">
+            <button type="button" data-statut="tous" class="actif" aria-pressed="true">Tout</button>
+            <button type="button" data-statut="envie" aria-pressed="false">À voir</button>
+            <button type="button" data-statut="visite" aria-pressed="false">Visité</button>
+          </div>
+          <div class="ligne-filtres">
+            <label class="champ-compact">
+              <span>Trier</span>
+              <select id="tri">
+                <option value="recent">Ajout récent</option>
+                <option value="nom">Nom</option>
+                <option value="categorie">Catégorie</option>
+                <option value="etoiles">Étoiles</option>
+                <option value="distance">Distance</option>
+              </select>
+            </label>
+            <button id="b-filtre-cat" type="button" class="bouton-fin" aria-expanded="false">
+              Catégories <span id="filtre-cat-compte"></span>
+            </button>
+          </div>
+          <div id="filtre-cat" hidden>
+            <div class="ligne-filtres">
+              <button id="cat-tout" type="button" class="bouton-fin">Tout cocher</button>
+              <button id="cat-rien" type="button" class="bouton-fin">Tout décocher</button>
+            </div>
+            <div id="cat-cases"></div>
+          </div>
+        </div>
+        <p id="liste-resume" class="resume"></p>
+        <ol id="liste" class="liste"></ol>
+        <p id="liste-vide" class="vide" hidden>
+          Votre carnet est vide. Touchez <strong>＋</strong> pour poser votre première envie
+          sur la carte.
+        </p>
+      </section>
+
+      <!-- ————— Circuits ————— -->
+      <section id="vue-circuits" class="vue" hidden>
+        <header class="vue-tete">
+          <h2>Mes circuits</h2>
+          <button class="fermer" type="button" data-fermer-tiroir aria-label="Fermer">✕</button>
+        </header>
+        <div id="circuits-liste-bloc">
+          <button id="b-circuit-neuf" type="button" class="bouton-plein">＋ Nouveau circuit</button>
+          <ol id="circuits-liste" class="liste"></ol>
+          <p id="circuits-vide" class="vide" hidden>
+            Un circuit rassemble plusieurs envies dans l'ordre où vous voulez les voir.
+            Il s'affiche sur la carte et s'ouvre dans votre application d'itinéraire.
+          </p>
+        </div>
+
+        <div id="circuit-detail" hidden>
+          <button id="circuit-retour" type="button" class="bouton-fin">‹ Tous les circuits</button>
+          <label class="champ"><span>Nom du circuit</span>
+            <input id="c-nom" type="text" maxlength="80" placeholder="Week-end en Bretagne"></label>
+          <label class="champ"><span>Description</span>
+            <textarea id="c-desc" rows="2" maxlength="600" placeholder="Trois jours, en voiture, mi-juin…"></textarea></label>
+          <div class="ligne-filtres">
+            <label class="champ-compact"><span>Couleur du tracé</span>
+              <select id="c-couleur">
+                <option value="#c2411f">Brique</option>
+                <option value="#1f6fae">Bleu</option>
+                <option value="#37804d">Vert</option>
+                <option value="#6d47b3">Violet</option>
+                <option value="#b32f6b">Framboise</option>
+                <option value="#a9631f">Ocre</option>
+                <option value="#333c44">Ardoise</option>
+              </select>
+            </label>
+          </div>
+          <p id="c-resume" class="resume"></p>
+          <ol id="c-etapes" class="liste etapes"></ol>
+          <p id="c-vide" class="vide" hidden>Ce circuit n'a pas encore d'étape.</p>
+          <div class="actions">
+            <button id="c-ajouter-etapes" type="button" class="bouton-plein">＋ Ajouter des étapes</button>
+            <button id="c-optimiser" type="button">Optimiser l'ordre</button>
+            <button id="c-itineraire" type="button">Itinéraire ↗</button>
+            <button id="c-gpx" type="button">Exporter en GPX</button>
+            <button id="c-supprimer" type="button" class="danger">Supprimer le circuit</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ————— Réglages ————— -->
+      <section id="vue-reglages" class="vue" hidden>
+        <header class="vue-tete">
+          <h2>Réglages</h2>
+          <button class="fermer" type="button" data-fermer-tiroir aria-label="Fermer">✕</button>
+        </header>
+
+        <h3>Carte</h3>
+        <label class="champ"><span>Fond de carte</span>
+          <select id="r-fond">
+            <option value="epure">Fond épuré</option>
+            <option value="plan">Plan détaillé</option>
+            <option value="vif">Fond contrasté</option>
+          </select></label>
+        <label class="champ"><span>Zone au démarrage</span>
+          <select id="r-zone">
+            <option value="france">France</option>
+            <option value="europe">Europe</option>
+            <option value="tout">Sur mes envies</option>
+          </select></label>
+
+        <h3>Photographies</h3>
+        <fieldset id="r-qualite" class="choix">
+          <legend class="visually-hidden">Réduction des photos à l'import</legend>
+        </fieldset>
+        <p class="note">Les photos sont réduites sur votre appareil avant d'être rangées dans le
+          carnet. L'original reste intact dans votre galerie. La copie enregistrée ne contient plus
+          ni coordonnées GPS ni numéro de série d'appareil : le réencodage les supprime.</p>
+
+        <h3>Géolocalisation</h3>
+        <p class="note">Elle est facultative et n'est jamais demandée au démarrage. Le bouton
+          <strong>⊕</strong> de la carte affiche votre position et calcule la distance jusqu'à
+          chaque envie. La position ne quitte pas l'appareil.</p>
+        <p id="geo-etat">Autorisation sur cet appareil : <strong id="geo-etat-val">inconnue</strong></p>
+
+        <h3>Sauvegarde</h3>
+        <p class="note">Tout est stocké dans ce navigateur, sur cet appareil. Rien n'est partagé
+          avec vos autres appareils : pour transférer votre carnet, ou simplement le mettre à
+          l'abri, exportez une archive et restaurez-la ailleurs. La restauration
+          « Réunir » rassemble les deux carnets en gardant, pour chaque fiche, la version la plus
+          récemment modifiée — les suppressions comprises.</p>
+        <p id="r-sauvegarde-etat" class="etat-sauvegarde"></p>
+        <div class="actions">
+          <button id="r-exporter" type="button" class="bouton-plein">Exporter mon carnet (.zip)</button>
+          <button id="r-importer" type="button">Restaurer une archive…</button>
+          <button id="r-gpx" type="button">Exporter tous les points (.gpx)</button>
+          <button id="r-effacer" type="button" class="danger">Tout effacer</button>
+        </div>
+        <input id="fichier-archive" type="file" accept=".zip,application/zip" hidden>
+        <p id="r-place" class="note"></p>
+
+        <h3>À propos</h3>
+        <p class="note">Version <span id="app-version">—</span>.
+          <a href="confidentialite.html">Politique de confidentialité</a></p>
+      </section>
+    </aside>
+
+    <!-- ————— Fiche d'un POI ————— -->
+    <section id="fiche" hidden aria-live="polite">
+      <header class="vue-tete">
+        <button class="fermer" type="button" id="f-fermer" aria-label="Fermer la fiche">✕</button>
+        <p id="f-cat"><span id="f-sym" class="pastille"></span><span id="f-cat-txt"></span></p>
+      </header>
+      <div class="corps">
+        <h2 id="f-nom"></h2>
+        <p id="f-etat"></p>
+        <p id="f-adresse" class="discret"></p>
+        <div id="f-galerie" class="galerie" hidden></div>
+        <section id="f-bloc-notes" hidden>
+          <h3>Pourquoi j'y vais</h3>
+          <p id="f-notes"></p>
+        </section>
+        <section id="f-bloc-avis" hidden>
+          <h3>Ce que j'en ai pensé</h3>
+          <p id="f-avis"></p>
+        </section>
+        <section id="f-bloc-liens" hidden>
+          <h3>À consulter</h3>
+          <ul id="f-liens" class="liens"></ul>
+        </section>
+        <section id="f-bloc-circuits" hidden>
+          <h3>Dans mes circuits</h3>
+          <ul id="f-circuits" class="liens"></ul>
+        </section>
+        <p id="f-distance" class="discret" hidden></p>
+      </div>
+      <footer class="actions collees">
+        <button id="f-modifier" type="button" class="bouton-plein">Modifier</button>
+        <button id="f-itineraire" type="button">Itinéraire ↗</button>
+        <button id="f-zoom" type="button">Centrer</button>
+      </footer>
+    </section>
+
+    <!-- ————— Éditeur ————— -->
+    <section id="editeur" hidden>
+      <header class="vue-tete">
+        <button class="fermer" type="button" id="e-fermer" aria-label="Fermer l'éditeur">✕</button>
+        <h2 id="e-titre">Modifier</h2>
+        <span id="e-etat-sauve" class="sauve" hidden>enregistré</span>
+      </header>
+      <div class="corps">
+        <label class="champ"><span>Nom du lieu</span>
+          <input id="e-nom" type="text" maxlength="120" placeholder="Cascade du Hérisson"></label>
+
+        <fieldset class="champ">
+          <legend>Symbole</legend>
+          <button id="e-cat-actuel" type="button" class="choix-actuel" aria-expanded="false"
+                  aria-controls="e-categories">
+            <span id="e-cat-sym" class="pastille"></span>
+            <span id="e-cat-nom">Autre envie</span>
+            <span class="chevron" aria-hidden="true">Changer ▾</span>
+          </button>
+          <div id="e-categories" class="grille-cat" hidden></div>
+        </fieldset>
+
+        <fieldset class="champ">
+          <legend>État</legend>
+          <div class="segments" id="e-statut" role="group">
+            <button type="button" data-v="envie" aria-pressed="false">Envie</button>
+            <button type="button" data-v="visite" aria-pressed="false">Visité</button>
+          </div>
+        </fieldset>
+
+        <div id="e-bloc-visite" hidden>
+          <fieldset class="champ">
+            <legend>Mon appréciation</legend>
+            <div id="e-etoiles" class="etoiles-choix" role="group" aria-label="De une à trois étoiles">
+              <button type="button" data-n="1" aria-label="Une étoile — bien">★</button>
+              <button type="button" data-n="2" aria-label="Deux étoiles — remarquable">★</button>
+              <button type="button" data-n="3" aria-label="Trois étoiles — exceptionnel">★</button>
+            </div>
+            <p id="e-etoiles-txt" class="discret"></p>
+          </fieldset>
+          <label class="champ"><span>Date de la visite</span>
+            <input id="e-date" type="date"></label>
+          <label class="champ"><span>Ce que j'en ai pensé</span>
+            <textarea id="e-avis" rows="4" maxlength="4000"
+              placeholder="Le sentier du bas est le plus beau, y aller tôt…"></textarea></label>
+        </div>
+
+        <label class="champ"><span>Notes</span>
+          <textarea id="e-notes" rows="4" maxlength="4000"
+            placeholder="Pourquoi cette envie, ce qu'il ne faut pas manquer, horaires, tarifs…"></textarea></label>
+
+        <fieldset class="champ">
+          <legend>Sites internet</legend>
+          <ul id="e-liens" class="liens-edit"></ul>
+          <button id="e-lien-plus" type="button" class="bouton-fin">＋ Ajouter un lien</button>
+        </fieldset>
+
+        <fieldset class="champ">
+          <legend>Photographies <span id="e-photos-compte" class="discret"></span></legend>
+          <div id="e-photos" class="galerie-edit"></div>
+          <div class="ligne-filtres">
+            <button id="e-photo-plus" type="button" class="bouton-fin">＋ Ajouter des photos</button>
+            <label class="champ-compact"><span>Réduction</span>
+              <select id="e-photo-profil"></select></label>
+          </div>
+          <input id="fichier-photos" type="file" accept="image/*" multiple hidden>
+          <p id="e-photo-etat" class="discret"></p>
+        </fieldset>
+
+        <fieldset class="champ">
+          <legend>Position</legend>
+          <p id="e-position" class="discret"></p>
+          <label class="champ"><span>Adresse ou repère (facultatif)</span>
+            <input id="e-adresse" type="text" maxlength="200" placeholder="Ménétrux-en-Joux, Jura"></label>
+          <button id="e-deplacer" type="button" class="bouton-fin">Déplacer sur la carte</button>
+        </fieldset>
+
+        <div class="actions">
+          <button id="e-supprimer" type="button" class="danger">Supprimer cette envie</button>
+        </div>
+      </div>
+      <footer class="actions collees">
+        <button id="e-termine" type="button" class="bouton-plein">Terminé</button>
+      </footer>
+    </section>
+
+    <!-- ————— Sélecteur d'étapes pour un circuit ————— -->
+    <section id="choix-etapes" hidden>
+      <header class="vue-tete">
+        <button class="fermer" type="button" id="ce-fermer" aria-label="Fermer">✕</button>
+        <h2>Ajouter des étapes</h2>
+      </header>
+      <div class="corps">
+        <input id="ce-q" type="search" placeholder="Filtrer…" aria-label="Filtrer les envies">
+        <ol id="ce-liste" class="liste"></ol>
+      </div>
+      <footer class="actions collees">
+        <button id="ce-valider" type="button" class="bouton-plein">Ajouter au circuit</button>
+      </footer>
+    </section>
+  </main>
+
+  <!-- ————— Barre d'onglets ————— -->
+  <nav id="onglets" aria-label="Navigation principale">
+    <button type="button" data-vue="carte" class="actif">
+      <span class="ic" aria-hidden="true">◎</span><span class="lb">Carte</span></button>
+    <button type="button" data-vue="liste">
+      <span class="ic" aria-hidden="true">☰</span><span class="lb">Envies</span></button>
+    <button type="button" id="b-ajouter" class="proeminent">
+      <span class="ic" aria-hidden="true">＋</span><span class="lb">Ajouter</span></button>
+    <button type="button" data-vue="circuits">
+      <span class="ic" aria-hidden="true">⤳</span><span class="lb">Circuits</span></button>
+    <button type="button" data-vue="reglages">
+      <span class="ic" aria-hidden="true">⚙</span><span class="lb">Réglages</span></button>
+  </nav>
+
+  <!-- ————— Menu d'ajout ————— -->
+  <div id="menu-ajout" hidden role="menu" aria-label="Ajouter une envie">
+    <button type="button" data-mode="pointer" role="menuitem">
+      <strong>Placer sur la carte</strong><small>Touchez ensuite l'endroit voulu</small></button>
+    <button type="button" data-mode="position" role="menuitem">
+      <strong>Ici, où je suis</strong><small>Utilise la géolocalisation</small></button>
+    <button type="button" data-mode="photo" role="menuitem">
+      <strong>Depuis une photo</strong><small>Si elle contient sa position GPS</small></button>
+    <button type="button" data-mode="adresse" role="menuitem">
+      <strong>Chercher un lieu</strong><small>Par nom ou adresse</small></button>
+    <input id="fichier-photo-geo" type="file" accept="image/*" hidden>
+  </div>
+
+  <!-- ————— Visionneuse ————— -->
+  <div id="visionneuse" hidden>
+    <button id="v-fermer" type="button" aria-label="Fermer">✕</button>
+    <button id="v-prec" type="button" aria-label="Photo précédente">‹</button>
+    <img id="v-image" alt="">
+    <button id="v-suiv" type="button" aria-label="Photo suivante">›</button>
+    <p id="v-legende"></p>
+  </div>
+
+  <div id="toast" role="status" hidden></div>
+
+  <dialog id="confirmation" aria-labelledby="confirmation-titre">
+    <h2 id="confirmation-titre">Confirmer</h2>
+    <p id="confirmation-texte"></p>
+    <div class="actions">
+      <button id="confirmation-oui" type="button" class="danger">Confirmer</button>
+      <button id="confirmation-non" type="button" class="bouton-plein">Annuler</button>
+    </div>
+  </dialog>
+
+  <dialog id="apropos" aria-labelledby="apropos-titre">
+    <h2 id="apropos-titre">Mes envies de voyage</h2>
+    <p>Un carnet de repérage cartographique, version <span id="app-version-2">—</span>.
+      La carte s'ouvre <strong>vide</strong> : elle ne contient que ce que vous y posez.</p>
+    <h3>Ce que fait l'application</h3>
+    <ul>
+      <li>Poser des envies de visite sur un fond de carte de France ou d'Europe, avec un symbole
+        parmi trente-trois : musée, château, phare, cascade, restaurant, gîte…</li>
+      <li>Attacher à chaque envie des notes, des liens vers des sites, et jusqu'à dix photographies
+        réduites automatiquement.</li>
+      <li>Composer des circuits : plusieurs envies dans l'ordre, tracées sur la carte et
+        transmissibles à votre application d'itinéraire.</li>
+      <li>Après la visite, noter le lieu de une à trois étoiles et écrire ce que vous en avez pensé.</li>
+    </ul>
+    <h3>Où vont mes données</h3>
+    <p>Nulle part. Tout est enregistré dans ce navigateur, sur cet appareil : notes, photos,
+      circuits. Il n'y a ni compte, ni serveur, ni statistiques. Personne d'autre que vous n'y a
+      accès — et personne d'autre que vous ne peut les récupérer si vous changez d'appareil ou
+      videz les données du navigateur, d'où l'export d'archive dans les réglages.</p>
+    <h3>Ce qui sort de l'appareil</h3>
+    <ul>
+      <li>Les <strong>tuiles du fond de carte</strong>, demandées à OpenFreeMap au fur et à mesure
+        que vous vous déplacez.</li>
+      <li>Le <strong>texte que vous tapez dans la recherche de lieu</strong>, et lui seul, envoyé à
+        Nominatim (OpenStreetMap) quand vous demandez explicitement de chercher une adresse.</li>
+      <li>Rien d'autre : ni vos notes, ni vos photos, ni votre position.</li>
+    </ul>
+    <p><a href="confidentialite.html">Politique de confidentialité complète</a></p>
+    <h3>Sources</h3>
+    <ul>
+      <li>Fond de carte : OpenFreeMap © OpenMapTiles — données © contributeurs OpenStreetMap (ODbL)</li>
+      <li>Recherche de lieux : Nominatim © contributeurs OpenStreetMap (ODbL)</li>
+      <li>Cartographie : Leaflet et MapLibre GL, embarqués dans l'application</li>
+    </ul>
+    <button id="apropos-fermer" type="button" class="bouton-plein">Fermer</button>
+  </dialog>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="vendor/maplibre/maplibre-gl.js"></script>
+  <script src="vendor/maplibre/leaflet-maplibre-gl.js"></script>
+  <script src="js/exif.js"></script>
+  <script src="js/categories.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/photos.js"></script>
+  <script src="js/zip.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/fiches.js"></script>
+  <script src="js/circuits.js"></script>
+  <script src="js/reglages.js"></script>
+  <script src="js/demarrage.js"></script>
+</body>
+</html>
