@@ -10,6 +10,30 @@
   <meta name="description" content="Carnet de voyage personnel : notez vos envies de visites sur une carte vierge de France ou d'Europe, avec photos, liens et notes, composez des circuits et gardez le souvenir de ce que vous avez vu.">
   <meta name="theme-color" content="#1f3a4d">
   <title>Mes envies de voyage — carnet cartographique</title>
+
+  <!-- Installation sur iOS : Safari ne lit pas le manifeste pour l'écran
+       d'accueil, il lui faut ces trois-là. -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Envies">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Aperçu du lien quand on le partage par message ou sur un réseau.
+       Sans cela le destinataire ne voit qu'une adresse nue, et n'ouvre pas.
+       Les URL doivent être absolues : elles sont lues par un serveur
+       distant, qui n'a aucun contexte pour résoudre un chemin relatif. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Envies">
+  <meta property="og:title" content="Mes envies de voyage">
+  <meta property="og:description" content="Carnet de repérage cartographique : posez vos envies de visite sur une carte vierge de France ou d&#x27;Europe avec notes, liens et photographies, composez des circuits, et notez ce que…">
+  <meta property="og:url" content="https://cristo67000.github.io/envies-de-voyage/">
+  <meta property="og:image" content="https://cristo67000.github.io/envies-de-voyage/icons/apercu-1200x630.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Mes envies de voyage">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:locale:alternate" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
