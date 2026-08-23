@@ -11,7 +11,7 @@
  * par le cache HTTP du navigateur, donc consultables dans les zones déjà
  * parcourues.
  */
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.1.1';
 const CACHE = 'envies-de-voyage-' + VERSION;
 const ASSETS = [
   './',
@@ -68,16 +68,34 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
-  e.respondWith(
-    /* `no-cache` force la revalidation HTTP (304 si rien n'a changé). */
-    fetch(e.request.url, { cache: 'no-cache' })
-      .then((resp) => {
-        if (resp.ok) {
-          const copie = resp.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copie));
-        }
+  /* Réseau d'abord, cache en secours — et « secours » veut dire les deux
+   * façons dont le réseau manque :
+   *
+   *   il ne répond pas      → fetch() rejette
+   *   il répond mal         → fetch() résout, avec un statut d'erreur
+   *
+   * Ne rattraper que le premier cas laissait passer le second : la réponse en
+   * erreur était renvoyée telle quelle à la page, qui se retrouvait sans son
+   * JavaScript. Cela arrive derrière un portail captif d'hôtel, un proxy
+   * d'entreprise, un réseau qui filtre — c'est-à-dire précisément là où une
+   * application hors ligne doit tenir.
+   *
+   * `cache: 'no-cache'` force la revalidation HTTP (304 si rien n'a changé) :
+   * les mises à jour arrivent dès qu'elles existent.
+   */
+  e.respondWith((async () => {
+    try {
+      const resp = await fetch(e.request.url, { cache: 'no-cache' });
+      if (resp.ok) {
+        const copie = resp.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copie));
         return resp;
-      })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }))
-  );
+      }
+      return (await caches.match(e.request, { ignoreSearch: true })) || resp;
+    } catch (erreur) {
+      const enCache = await caches.match(e.request, { ignoreSearch: true });
+      if (enCache) return enCache;
+      throw erreur;
+    }
+  })());
 });
